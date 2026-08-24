@@ -1,0 +1,10 @@
+dist/
+work/
+.cache/
+*.exe
+*.AppImage
+*.tar.gz
+*.log
+.include
+node_modules/
+squashfs-root/

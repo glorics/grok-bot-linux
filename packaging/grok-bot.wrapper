@@ -1,0 +1,33 @@
+#!/bin/bash
+# Launcher for the unofficial Grok Bot Linux AppImage.
+set -u
+
+APPIMAGE="${GROKBOT_APPIMAGE:-$HOME/Applications/GrokBot-current.AppImage}"
+LOGDIR="${HOME}/.grokbot"
+LOG="${LOGDIR}/launch.log"
+
+mkdir -p "$LOGDIR"
+
+if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+  export DISPLAY=:0
+  export WAYLAND_DISPLAY=wayland-0
+fi
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+unset GBM_BACKENDS_PATH LIBGL_DRIVERS_PATH __EGL_VENDOR_LIBRARY_DIRS \
+      __EGL_VENDOR_LIBRARY_FILENAMES LIBVA_DRIVERS_PATH || true
+
+if [[ ! -x $APPIMAGE ]]; then
+  msg="Grok Bot AppImage missing or not executable: $APPIMAGE"
+  echo "$msg" >&2
+  echo "$(date -Is) $msg" >>"$LOG"
+  command -v notify-send >/dev/null && notify-send "Grok Bot" "$msg" || true
+  exit 1
+fi
+
+{
+  echo "===== $(date -Is) pid=$$ ====="
+  echo "display=${DISPLAY:-} wayland=${WAYLAND_DISPLAY:-} args=$*"
+} >>"$LOG"
+
+exec "$APPIMAGE" --no-sandbox --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1
