@@ -19,5 +19,7 @@ Checks on that host:
 - Existing Cursor account and bot roster remain
 - Cloud bots keep running after the window is closed
 
-Other Linux distros are untested. The artifact is linux-x64; glibc 2.36 is the
-known floor.
+Other Linux distros are untested. The artifact is linux-x64 glibc (not musl,
+not ARM). Native modules need glibc ≥ 2.34; Debian 12 (glibc 2.36) is the only
+verified host. Fedora: see the Fedora section in README.md — ABI looks fine,
+FUSE 2 is the likely install snag, no live Fedora run yet.
