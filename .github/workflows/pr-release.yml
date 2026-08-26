@@ -1,0 +1,46 @@
+name: PR auto-release
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+# Runs in the base repository so GITHUB_TOKEN can create releases for fork PRs.
+# Only event metadata is used; this workflow never checks out or executes PR code.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create or update PR prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -euo pipefail
+
+          tag="pr-${PR_NUMBER}"
+          title="PR #${PR_NUMBER}: ${PR_TITLE}"
+          body="Automatically created from [${title}](${PR_URL}).
+
+          This is a metadata-only prerelease generated when the pull request was opened or reopened. It is not an official versioned release."
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${tag} already exists; updating title and notes."
+            gh release edit "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$title" \
+              --notes "$body" \
+              --prerelease \
+              --latest=false
+          else
+            gh release create "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$title" \
+              --notes "$body" \
+              --prerelease \
+              --latest=false
+          fi
