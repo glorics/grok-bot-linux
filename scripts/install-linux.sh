@@ -19,9 +19,10 @@ DEST="${DEST_DIR}/GrokBot-current.AppImage"
 BIN="${HOME}/.local/bin"
 DESKTOP_DIR="${HOME}/.local/share/applications"
 ICON_DIR="${HOME}/.local/share/icons/hicolor"
+ICON_SIZES=(16 22 24 32 48 64 128 256)
 
 mkdir -p "$DEST_DIR" "$BIN" "$DESKTOP_DIR" \
-  "${ICON_DIR}/256x256/apps" "${ICON_DIR}/1024x1024/apps" \
+  "${ICON_DIR}/256x256/apps" "${HOME}/.local/share/pixmaps" \
   "${HOME}/.grokbot"
 
 # Replace a previous symlink instead of writing through it.
@@ -40,17 +41,38 @@ install -m 0755 "${ROOT}/packaging/grok-bot.wrapper" "${BIN}/grok-bot"
 
 install -m 0644 "${ROOT}/packaging/grok-bot.desktop" "${DESKTOP_DIR}/grok-bot.desktop"
 # Absolute Exec so the dock works even if ~/.local/bin is not in the desktop PATH.
-sed -i "s|^Exec=grok-bot %U$|Exec=${BIN}/grok-bot %U|" "${DESKTOP_DIR}/grok-bot.desktop"
+sed -i "s|^Exec=grok-bot |Exec=${BIN}/grok-bot |" "${DESKTOP_DIR}/grok-bot.desktop"
 sed -i "s|^TryExec=grok-bot$|TryExec=${DEST}|" "${DESKTOP_DIR}/grok-bot.desktop"
 
-# Reuse existing icons if present; otherwise leave Icon=grok-bot for hicolor.
-if [[ ! -f ${ICON_DIR}/256x256/apps/grok-bot.png ]]; then
-  echo "note: no grok-bot.png in ${ICON_DIR}; the menu may show a generic icon until you add one"
-fi
+install_icons() {
+  local tmp src="" size
+  tmp="$(mktemp -d)"
+  if ( cd "$tmp" && "$APPIMAGE" --appimage-extract usr/share/icons/hicolor/256x256/apps/grok-bot.png >/dev/null 2>&1 ); then
+    src="$tmp/squashfs-root/usr/share/icons/hicolor/256x256/apps/grok-bot.png"
+  elif ( cd "$tmp" && "$APPIMAGE" --appimage-extract grok-bot.png >/dev/null 2>&1 ); then
+    src="$tmp/squashfs-root/grok-bot.png"
+  fi
+  if [[ ! -f ${src:-} ]]; then
+    echo "note: no grok-bot.png extracted from AppImage; Plasma may keep a generic icon"
+    rm -rf "$tmp"
+    return 0
+  fi
+  for size in "${ICON_SIZES[@]}"; do
+    mkdir -p "${ICON_DIR}/${size}x${size}/apps"
+    cp -f "$src" "${ICON_DIR}/${size}x${size}/apps/grok-bot.png"
+  done
+  cp -f "$src" "${HOME}/.local/share/pixmaps/grok-bot.png"
+  rm -rf "$tmp"
+}
+
+install_icons
 
 update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
 gtk-update-icon-cache -f "${ICON_DIR}" 2>/dev/null || true
 xdg-desktop-menu forceupdate 2>/dev/null || true
+if command -v kbuildsycoca6 >/dev/null 2>&1; then
+  kbuildsycoca6 >/dev/null 2>&1 &
+fi
 
 echo "Installed:"
 echo "  AppImage : $DEST"

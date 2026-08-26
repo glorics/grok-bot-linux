@@ -22,7 +22,9 @@ chmod +x Grok_Bot_0.24.0_x86_64.AppImage
 ```
 
 `--no-sandbox` is required. The AppImage cannot ship a working Chromium
-setuid sandbox.
+setuid sandbox. On first launch the AppRun also installs `grok-bot.desktop`
+and hicolor icons into your XDG data dirs so KDE Plasma Wayland can match
+`app_id` `grok-bot` to the bundled icon.
 
 To register a dock / menu launcher (XDG, any distro):
 
