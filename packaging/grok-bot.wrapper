@@ -30,4 +30,6 @@ fi
   echo "display=${DISPLAY:-} wayland=${WAYLAND_DISPLAY:-} args=$*"
 } >>"$LOG"
 
-exec "$APPIMAGE" --no-sandbox --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1
+# --class=grok-bot must match StartupWMClass / Wayland app_id so Plasma
+# can resolve the installed grok-bot.desktop icon.
+exec "$APPIMAGE" --no-sandbox --class=grok-bot --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1
