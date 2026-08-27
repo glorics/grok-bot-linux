@@ -8,17 +8,18 @@ payload, run it on Electron for Linux, and replace the Windows-only native
 addons.
 
 **Tested on Debian 12 Bookworm** (amd64, glibc 2.36, GNOME/Wayland) with
-Grok Bot 0.24.0. The AppImage is a generic linux-x64 / glibc build (not musl,
+Grok Bot **0.28.0**. The AppImage is a generic linux-x64 / glibc build (not musl,
 not ARM). Binaries need glibc ≥ 2.34. Bookworm is the first-party host.
-**Arch Linux: community-confirmed** (AppImage). Fedora notes are below.
+**Arch Linux: community-confirmed** on 0.24.0 (same AppImage shape). Fedora notes
+are below. 0.24.0 remains on the [releases](https://github.com/glorics/grok-bot-linux/releases) page.
 
 ## Install
 
 From a [release](https://github.com/glorics/grok-bot-linux/releases):
 
 ```bash
-chmod +x Grok_Bot_0.24.0_x86_64.AppImage
-./Grok_Bot_0.24.0_x86_64.AppImage --no-sandbox
+chmod +x Grok_Bot_0.28.0_x86_64.AppImage
+./Grok_Bot_0.28.0_x86_64.AppImage --no-sandbox
 ```
 
 `--no-sandbox` is required. The AppImage cannot ship a working Chromium
@@ -27,7 +28,7 @@ setuid sandbox.
 To register a dock / menu launcher (XDG, any distro):
 
 ```bash
-./scripts/install-linux.sh Grok_Bot_0.24.0_x86_64.AppImage
+./scripts/install-linux.sh Grok_Bot_0.28.0_x86_64.AppImage
 ```
 
 Sign in with the same Cursor / SuperGrok Plus account. Bots live on the cloud
@@ -40,8 +41,8 @@ reported the 0.24.0 AppImage runs on Arch (2026-08-26). glibc on Arch is newer
 than Debian 12, so the ABI is fine. First-party testing is still Debian 12 only.
 
 ```bash
-chmod +x Grok_Bot_0.24.0_x86_64.AppImage
-./Grok_Bot_0.24.0_x86_64.AppImage --no-sandbox
+chmod +x Grok_Bot_0.28.0_x86_64.AppImage
+./Grok_Bot_0.28.0_x86_64.AppImage --no-sandbox
 ```
 
 If the AppImage will not mount (`libfuse.so.2` / `fusermount` missing):
@@ -54,7 +55,7 @@ Same FUSE fallbacks as elsewhere: `APPIMAGE_EXTRACT_AND_RUN=1` or the
 release tarball. Menu entry (XDG, no AUR package yet):
 
 ```bash
-./scripts/install-linux.sh Grok_Bot_0.24.0_x86_64.AppImage
+./scripts/install-linux.sh Grok_Bot_0.28.0_x86_64.AppImage
 ```
 
 ## Fedora
@@ -68,35 +69,35 @@ by default, and the AppImage runtime still looks for `fusermount`.
 
 ```bash
 sudo dnf install fuse fuse-libs
-chmod +x Grok_Bot_0.24.0_x86_64.AppImage
-./Grok_Bot_0.24.0_x86_64.AppImage --no-sandbox
+chmod +x Grok_Bot_0.28.0_x86_64.AppImage
+./Grok_Bot_0.28.0_x86_64.AppImage --no-sandbox
 ```
 
 If it still will not mount (`libfuse.so.2` / `fusermount` missing), skip FUSE:
 
 ```bash
-APPIMAGE_EXTRACT_AND_RUN=1 ./Grok_Bot_0.24.0_x86_64.AppImage --no-sandbox
+APPIMAGE_EXTRACT_AND_RUN=1 ./Grok_Bot_0.28.0_x86_64.AppImage --no-sandbox
 ```
 
 Or use the tarball from the same release (no FUSE at all):
 
 ```bash
-tar -xzf Grok_Bot_0.24.0_linux_x64.tar.gz
-./Grok_Bot_0.24.0_linux_x64/grok-bot --no-sandbox --ozone-platform-hint=auto
+tar -xzf Grok_Bot_0.28.0_linux_x64.tar.gz
+./Grok_Bot_0.28.0_linux_x64/grok-bot --no-sandbox --ozone-platform-hint=auto
 ```
 
-Menu entry: `./scripts/install-linux.sh Grok_Bot_0.24.0_x86_64.AppImage`
+Menu entry: `./scripts/install-linux.sh Grok_Bot_0.28.0_x86_64.AppImage`
 
 If the window never appears (common with NVIDIA):
 
 ```bash
-./Grok_Bot_0.24.0_x86_64.AppImage --no-sandbox --ozone-platform=x11
+./Grok_Bot_0.28.0_x86_64.AppImage --no-sandbox --ozone-platform=x11
 ```
 
 If SELinux blocks a file from Downloads:
 
 ```bash
-restorecon -v ./Grok_Bot_0.24.0_x86_64.AppImage
+restorecon -v ./Grok_Bot_0.28.0_x86_64.AppImage
 ```
 
 Will not work: aarch64, musl, or a box with no GTK3. On a bare KDE spin:
@@ -111,7 +112,7 @@ rather than layering fuse2.
 ## Build from the Windows installer
 
 ```bash
-./scripts/build-from-windows.sh --exe /path/to/Grok_Bot_0.24.0_Setup.exe
+./scripts/build-from-windows.sh --exe /path/to/Grok_Bot_0.28.0_Setup.exe
 ```
 
 If you omit `--exe`, the script downloads that version from Cursor’s CDN.
