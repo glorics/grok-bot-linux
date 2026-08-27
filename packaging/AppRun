@@ -1,0 +1,103 @@
+#!/bin/sh
+# Grok Bot AppImage launcher.
+# Installs hicolor icons (and a .desktop only if none exists) so Plasma
+# Wayland can map app_id grok-bot to Icon=grok-bot. Never rewrite Exec on
+# an existing grok-bot.desktop: that file may be the GNOME dock launcher.
+SELF="$(readlink -f "$0")"
+HERE="${SELF%/*}"
+
+install_desktop_integration() {
+  datadir="${XDG_DATA_HOME:-$HOME/.local/share}"
+  icon_src="$HERE/usr/share/icons/hicolor/256x256/apps/grok-bot.png"
+  [ -f "$icon_src" ] || icon_src="$HERE/grok-bot.png"
+  [ -f "$icon_src" ] || return 0
+
+  applications_dir="$datadir/applications"
+  mkdir -p "$applications_dir" || return 0
+
+  changed=0
+  for size in 16 22 24 32 48 64 128 256; do
+    sizedir="$datadir/icons/hicolor/${size}x${size}/apps"
+    mkdir -p "$sizedir" || continue
+    src="$HERE/usr/share/icons/hicolor/${size}x${size}/apps/grok-bot.png"
+    [ -f "$src" ] || src="$icon_src"
+    dest="$sizedir/grok-bot.png"
+    if [ ! -f "$dest" ] || ! cmp -s "$src" "$dest" 2>/dev/null; then
+      cp -f "$src" "$dest" 2>/dev/null || continue
+      changed=1
+    fi
+  done
+
+  mkdir -p "$datadir/pixmaps" 2>/dev/null || true
+  if [ ! -f "$datadir/pixmaps/grok-bot.png" ] || ! cmp -s "$icon_src" "$datadir/pixmaps/grok-bot.png" 2>/dev/null; then
+    cp -f "$icon_src" "$datadir/pixmaps/grok-bot.png" 2>/dev/null || true
+    changed=1
+  fi
+
+  desktop_out="$applications_dir/grok-bot.desktop"
+  if [ ! -f "$desktop_out" ]; then
+    if [ -n "${APPIMAGE:-}" ] && [ -x "$APPIMAGE" ]; then
+      exec_path="$APPIMAGE"
+    else
+      exec_path="$SELF"
+    fi
+    exec_quoted=$(printf '%s' "$exec_path" | sed 's/"/\\"/g')
+    version=""
+    if [ -f "$HERE/grok-bot.desktop" ]; then
+      version=$(sed -n 's/^X-AppImage-Version=//p' "$HERE/grok-bot.desktop" | head -n 1)
+    fi
+    desktop_tmp="$applications_dir/grok-bot.desktop.$$"
+    cat > "$desktop_tmp" <<EOF
+[Desktop Entry]
+Name=Grok Bot
+Comment=Grok Bot (unofficial Linux build)
+Exec="${exec_quoted}" --no-sandbox --class=grok-bot %U
+Icon=grok-bot
+Type=Application
+Categories=Network;
+Terminal=false
+StartupNotify=true
+StartupWMClass=grok-bot
+MimeType=x-scheme-handler/grokbot;x-scheme-handler/sand;
+X-AppImage-Integrate=false
+EOF
+    if [ -n "$version" ]; then
+      printf 'X-AppImage-Version=%s\n' "$version" >> "$desktop_tmp"
+    fi
+    mv -f "$desktop_tmp" "$desktop_out"
+    changed=1
+  else
+    # Existing launcher (install-linux.sh / GNOME dock): keep Exec as-is.
+    if ! grep -q '^Icon=grok-bot$' "$desktop_out"; then
+      tmp="$desktop_out.$$"
+      if grep -q '^Icon=' "$desktop_out"; then
+        sed 's|^Icon=.*|Icon=grok-bot|' "$desktop_out" > "$tmp" && mv -f "$tmp" "$desktop_out"
+      else
+        printf 'Icon=grok-bot\n' >> "$desktop_out"
+      fi
+      changed=1
+    fi
+    if ! grep -q '^StartupWMClass=grok-bot$' "$desktop_out"; then
+      tmp="$desktop_out.$$"
+      if grep -q '^StartupWMClass=' "$desktop_out"; then
+        sed 's|^StartupWMClass=.*|StartupWMClass=grok-bot|' "$desktop_out" > "$tmp" && mv -f "$tmp" "$desktop_out"
+      else
+        printf 'StartupWMClass=grok-bot\n' >> "$desktop_out"
+      fi
+      changed=1
+    fi
+  fi
+  chmod 644 "$desktop_out" 2>/dev/null || true
+
+  if [ "$changed" = 1 ]; then
+    update-desktop-database "$applications_dir" >/dev/null 2>&1 || true
+    gtk-update-icon-cache -f -t "$datadir/icons/hicolor" >/dev/null 2>&1 || true
+    if command -v kbuildsycoca6 >/dev/null 2>&1; then
+      kbuildsycoca6 >/dev/null 2>&1 &
+    fi
+  fi
+}
+
+install_desktop_integration
+
+exec "${HERE}/usr/bin/grok-bot" --no-sandbox --class=grok-bot "$@"

@@ -119,12 +119,20 @@ npx --yes @electron/asar extract "${STAGE}/resources/app.asar" "$ASAR_TMP"
 export GROKBOT_UNPACKED="${STAGE}/resources/app.asar.unpacked"
 python3 "${ROOT}/scripts/fix_natives.py"
 
+export GROKBOT_ASAR_TMP="$ASAR_TMP"
+python3 "${ROOT}/scripts/fix_desktop_identity.py"
+
 if [[ -d ${STAGE}/resources/app.asar.unpacked/dist/deps ]]; then
   rm -rf "${ASAR_TMP}/dist/deps"
   mkdir -p "${ASAR_TMP}/dist"
   cp -a "${STAGE}/resources/app.asar.unpacked/dist/deps" "${ASAR_TMP}/dist/deps"
 fi
 npx --yes @electron/asar pack "$ASAR_TMP" "${STAGE}/resources/app.asar"
+
+ICON="$(find "$ASAR_TMP" "${STAGE}/resources" -name 'app-icon*.png' 2>/dev/null | head -1 || true)"
+if [[ -n ${ICON} && -f $ICON ]]; then
+  cp "$ICON" "${STAGE}/grok-bot.png"
+fi
 
 mkdir -p "$DIST"
 TARBALL="${DIST}/Grok_Bot_${VERSION}_linux_x64.tar.gz"
@@ -134,34 +142,36 @@ echo "tarball $TARBALL"
 # AppImage
 if command -v mksquashfs >/dev/null; then
   APPDIR="${WORKDIR}/AppDir"
-  mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/applications" \
-           "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
+  mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/applications"
   cp -a "${STAGE}/." "${APPDIR}/usr/bin/"
-  ICON="$(find "${STAGE}" "$ASAR_TMP" -name 'app-icon*.png' 2>/dev/null | head -1 || true)"
-  if [[ -n ${ICON} && -f $ICON ]]; then
-    cp "$ICON" "${APPDIR}/grok-bot.png"
-    cp "$ICON" "${APPDIR}/.DirIcon"
-    cp "$ICON" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/grok-bot.png"
+  ICON_SRC="${STAGE}/grok-bot.png"
+  if [[ ! -f $ICON_SRC ]]; then
+    ICON_SRC="$(find "${STAGE}" "$ASAR_TMP" -name 'app-icon*.png' 2>/dev/null | head -1 || true)"
+  fi
+  if [[ -n ${ICON_SRC} && -f $ICON_SRC ]]; then
+    cp "$ICON_SRC" "${APPDIR}/grok-bot.png"
+    cp "$ICON_SRC" "${APPDIR}/.DirIcon"
+    for size in 16 22 24 32 48 64 128 256; do
+      mkdir -p "${APPDIR}/usr/share/icons/hicolor/${size}x${size}/apps"
+      cp "$ICON_SRC" "${APPDIR}/usr/share/icons/hicolor/${size}x${size}/apps/grok-bot.png"
+    done
   fi
   cat > "${APPDIR}/grok-bot.desktop" <<EOF
 [Desktop Entry]
 Name=Grok Bot
-Exec=grok-bot --no-sandbox
+Comment=Grok Bot (unofficial Linux build)
+Exec=grok-bot --no-sandbox --class=grok-bot
 Icon=grok-bot
 Type=Application
 Categories=Network;
 Terminal=false
-StartupWMClass=Grok Bot
+StartupNotify=true
+StartupWMClass=grok-bot
+MimeType=x-scheme-handler/grokbot;x-scheme-handler/sand;
 X-AppImage-Version=${VERSION}
 EOF
   cp "${APPDIR}/grok-bot.desktop" "${APPDIR}/usr/share/applications/"
-  cat > "${APPDIR}/AppRun" <<'EOF'
-#!/bin/sh
-SELF="$(readlink -f "$0")"
-HERE="${SELF%/*}"
-exec "${HERE}/usr/bin/grok-bot" --no-sandbox "$@"
-EOF
-  chmod +x "${APPDIR}/AppRun"
+  install -m 0755 "${ROOT}/packaging/AppRun" "${APPDIR}/AppRun"
 
   TOOL="${CACHE}/appimagetool"
   if [[ ! -x $TOOL ]]; then

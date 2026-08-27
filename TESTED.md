@@ -1,6 +1,6 @@
 # Tested
 
-Current first-party build:
+Current first-party build (Linux packaging 0.28.1, Windows payload 0.28.0):
 
 | | |
 | --- | --- |
@@ -12,6 +12,7 @@ Current first-party build:
 | Electron | 42.1.0 |
 | Input | Official `Grok_Bot_0.28.0_Setup.exe` (win32-x64) |
 | Builder | `scripts/build-from-windows.sh` |
+| Linux packaging | 0.28.1 (`StartupWMClass=grok-bot`, AppRun does not rewrite an existing dock Exec) |
 | Date | 2026-08-27 |
 
 Checks on that host:
@@ -20,6 +21,8 @@ Checks on that host:
 - Crashpad reports `_version=0.28.0` / Electron 42.1.0
 - GPU process and renderer stay up on Wayland
 - Isolated-profile smoke test (did not reuse the live 0.24 session)
+- 0.28.1 AppRun left `Exec=/home/manny/.local/bin/grok-bot` unchanged on GNOME
+- 0.28.1 patched `StartupWMClass` to `grok-bot` and kept the dock wrapper
 
 Previous first-party build (still published):
 

@@ -30,4 +30,4 @@ fi
   echo "display=${DISPLAY:-} wayland=${WAYLAND_DISPLAY:-} args=$*"
 } >>"$LOG"
 
-exec "$APPIMAGE" --no-sandbox --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1
+exec "$APPIMAGE" --no-sandbox --class=grok-bot --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1

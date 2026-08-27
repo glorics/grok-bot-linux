@@ -2,7 +2,7 @@
 Name=Grok Bot
 GenericName=Grok Bot
 Comment=Grok Bot (unofficial Linux build)
-Exec=grok-bot %U
+Exec=grok-bot --no-sandbox --class=grok-bot %U
 TryExec=grok-bot
 Icon=grok-bot
 Terminal=false
@@ -10,6 +10,6 @@ Type=Application
 Categories=Network;
 Keywords=Grok;Bot;xAI;Cursor;
 StartupNotify=true
-StartupWMClass=Grok Bot
+StartupWMClass=grok-bot
 MimeType=x-scheme-handler/grokbot;x-scheme-handler/sand;
 DBusActivatable=false
