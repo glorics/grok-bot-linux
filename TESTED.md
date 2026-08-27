@@ -49,5 +49,5 @@ Community reports:
 | --- | --- | --- |
 | Arch Linux | AppImage 0.24.0 runs | [@RawXennial](https://x.com/RawXennial/status/2092756795840204804), 2026-08-26 |
 | Linux Mint | 0.28.0 builds and runs | [@r_u_thinking](https://x.com/r_u_thinking/status/2092805544411111796), 2026-08-27 |
-| SteamOS 3.8.25 (Plasma 6 Wayland) | AppImage launches; taskbar icon is the generic Wayland W | [#1](https://github.com/glorics/grok-bot-linux/issues/1) |
+| SteamOS 3.8.25 (Plasma 6 Wayland) | 0.28.1 taskbar icon is the Grokbot PNG (was the generic Wayland W on 0.24) | [#1](https://github.com/glorics/grok-bot-linux/issues/1) |
 | Fedora Workstation 43/44 | untested; ABI should be fine, FUSE 2 is the likely snag | README Fedora section |
