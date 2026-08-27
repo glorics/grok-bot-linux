@@ -10,8 +10,9 @@ addons.
 **Tested on Debian 12 Bookworm** (amd64, glibc 2.36, GNOME/Wayland) with
 Grok Bot **0.28.0**. The AppImage is a generic linux-x64 / glibc build (not musl,
 not ARM). Binaries need glibc ≥ 2.34. Bookworm is the first-party host.
-**Arch Linux: community-confirmed** on 0.24.0 (same AppImage shape). Fedora notes
-are below. 0.24.0 remains on the [releases](https://github.com/glorics/grok-bot-linux/releases) page.
+**Arch Linux** and **Linux Mint**: community-confirmed. Fedora notes are below.
+0.24.0 remains on the [releases](https://github.com/glorics/grok-bot-linux/releases)
+page.
 
 ## Install
 
@@ -56,6 +57,19 @@ release tarball. Menu entry (XDG, no AUR package yet):
 
 ```bash
 ./scripts/install-linux.sh Grok_Bot_0.28.0_x86_64.AppImage
+```
+
+## Linux Mint
+
+**Community-confirmed.** [@r_u_thinking](https://x.com/r_u_thinking/status/2092805544411111796)
+reported 0.28.0 builds and runs on Mint (2026-08-27). Mint is Ubuntu/Debian, so
+the AppImage and `install-linux.sh` path is the same as above. First-party
+testing is still Debian 12 only.
+
+If the AppImage will not mount (`libfuse.so.2` missing):
+
+```bash
+sudo apt install libfuse2t64 || sudo apt install libfuse2
 ```
 
 ## Fedora
