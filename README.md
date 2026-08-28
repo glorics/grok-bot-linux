@@ -11,7 +11,8 @@ addons.
 Grok Bot **0.29.0**. The AppImage is a generic
 linux-x64 / glibc build (not musl, not ARM). Binaries need glibc ≥ 2.34.
 Bookworm is the first-party host. **Arch Linux** and **Linux Mint**:
-community-confirmed. Fedora notes are below. 0.28.1, 0.28.0 and 0.24.0 remain on
+community-confirmed. **Omarchy 4.0.1** (Hyprland): first-party AppImage 0.29.0
+in a VM. Fedora notes are below. 0.28.1, 0.28.0 and 0.24.0 remain on
 the [releases](https://github.com/glorics/grok-bot-linux/releases) page.
 
 ## Install
@@ -48,6 +49,12 @@ grok-bot --no-update
 
 Sign in with the same Cursor / SuperGrok Plus account. Bots live on the cloud
 computer; this app is only the remote control.
+
+## Omarchy
+
+Same AppImage as Arch (Omarchy is Arch + Hyprland). **0.29.0** ran here on
+Omarchy 4.0.1 in QEMU. `fuse2` if the image will not mount; `--ozone-platform=x11`
+if the window never appears.
 
 ## Arch Linux
 
