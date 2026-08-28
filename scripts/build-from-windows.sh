@@ -33,7 +33,7 @@ if [[ -n ${EXE} ]]; then
     VERSION="${BASH_REMATCH[1]}"
   fi
 fi
-VERSION="${VERSION:-0.29.0}"
+VERSION="${VERSION:-0.30.0}"
 
 if [[ -z $EXE ]]; then
   mkdir -p "$CACHE"

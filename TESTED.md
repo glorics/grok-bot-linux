@@ -8,26 +8,26 @@ Current first-party build:
 | glibc | 2.36 |
 | Desktop | GNOME, Wayland |
 | Node (build) | v24.14.1 |
-| Grok Bot | 0.29.0 |
+| Grok Bot | 0.30.0 |
 | Electron | 42.1.0 |
-| Input | Official `Grok_Bot_0.29.0_Setup.exe` (win32-x64) |
+| Input | Official `Grok_Bot_0.30.0_Setup.exe` (win32-x64) |
 | Builder | `scripts/build-from-windows.sh` |
 | Linux packaging | same grok-bot desktop identity as 0.28.1 |
-| Date | 2026-08-27 |
+| Date | 2026-08-28 |
 
 Checks on that host:
 
 - AppImage starts with `--no-sandbox --ozone-platform-hint=auto`
-- Crashpad reports `_version=0.29.0` / Electron 42.1.0
+- Isolated profile reports `app_version=0.30.0` / Electron 42.1.0
 - GPU process and renderer stay up on Wayland
 - Isolated-profile smoke test
 - AppRun left existing dock `Exec` unchanged on GNOME
-- `grok-bot --check` matches GitHub latest; `--update-only` fetched 0.29.0 from a fake 0.28.1 install (SHA-256 verified)
 
 Previous first-party builds (still published):
 
 | Grok Bot | Linux packaging | Date |
 | --- | --- | --- |
+| 0.29.0 | same grok-bot desktop identity as 0.28.1 | 2026-08-27 |
 | 0.28.0 | 0.28.1 (Plasma icon) | 2026-08-27 |
 | 0.24.0 | first Linux AppImage | 2026-08-24 |
 
@@ -41,7 +41,7 @@ keep running after the window is closed.
 The artifact is linux-x64 glibc (not musl, not ARM). Native modules need
 glibc ≥ 2.34. Debian 12 (glibc 2.36) is the first-party **build** host.
 **Omarchy 4.0.1** (Hyprland, QEMU) is a first-party **run** host for the
-same 0.29.0 AppImage (2026-08-28).
+0.29.0 AppImage (2026-08-28); 0.30.0 is the same linux-x64 pipeline.
 
 Community reports:
 
