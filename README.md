@@ -7,13 +7,13 @@ This project builds one from the **official Windows installer**: extract the
 payload, run it on Electron for Linux, and replace the Windows-only native
 addons.
 
-**Tested on Debian 12 Bookworm** (amd64, glibc 2.36, GNOME/Wayland) with
-Grok Bot **0.29.0**. The AppImage is a generic
-linux-x64 / glibc build (not musl, not ARM). Binaries need glibc ≥ 2.34.
-Bookworm is the first-party host. **Arch Linux** and **Linux Mint**:
-community-confirmed. **Omarchy 4.0.1** (Hyprland): first-party AppImage 0.29.0
-in a VM. Fedora notes are below. 0.28.1, 0.28.0 and 0.24.0 remain on
-the [releases](https://github.com/glorics/grok-bot-linux/releases) page.
+**Works on Omarchy.** First-party AppImage **0.29.0** on **Omarchy 4.0.1**
+(Hyprland, QEMU) and **Debian 12 Bookworm** (amd64, glibc 2.36, GNOME/Wayland).
+The AppImage is a generic linux-x64 / glibc build (not musl, not ARM).
+Binaries need glibc ≥ 2.34. Bookworm is the build host. **Arch Linux** and
+**Linux Mint**: community-confirmed. Fedora notes are below. 0.28.1, 0.28.0
+and 0.24.0 remain on the
+[releases](https://github.com/glorics/grok-bot-linux/releases) page.
 
 ## Install
 
@@ -52,15 +52,34 @@ computer; this app is only the remote control.
 
 ## Omarchy
 
-Same AppImage as Arch (Omarchy is Arch + Hyprland). **0.29.0** ran here on
-Omarchy 4.0.1 in QEMU. `fuse2` if the image will not mount; `--ozone-platform=x11`
-if the window never appears.
+**Works.** Same AppImage as Arch (Omarchy is Arch + Hyprland). **0.29.0** ran
+here on Omarchy 4.0.1 under Hyprland in QEMU.
+
+```bash
+chmod +x Grok_Bot_0.29.0_x86_64.AppImage
+./Grok_Bot_0.29.0_x86_64.AppImage --no-sandbox
+```
+
+If the AppImage will not mount (`libfuse.so.2` / `fusermount` missing):
+
+```bash
+sudo pacman -S fuse2
+```
+
+If the window never appears on Hyprland, add `--ozone-platform=x11`.
+Same FUSE fallbacks as Arch: `APPIMAGE_EXTRACT_AND_RUN=1` or the release
+tarball. Menu entry:
+
+```bash
+./scripts/install-linux.sh Grok_Bot_0.29.0_x86_64.AppImage
+```
 
 ## Arch Linux
 
 **Community-confirmed.** [@RawXennial](https://x.com/RawXennial/status/2092756795840204804)
 reported the 0.24.0 AppImage runs on Arch (2026-08-26). glibc on Arch is newer
-than Debian 12, so the ABI is fine. First-party testing is still Debian 12 only.
+than Debian 12, so the ABI is fine. First-party Arch-based run is Omarchy 4.0.1;
+stock Arch remains community-confirmed.
 
 ```bash
 chmod +x Grok_Bot_0.29.0_x86_64.AppImage
