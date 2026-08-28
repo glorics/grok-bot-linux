@@ -25,19 +25,33 @@ mkdir -p "$DEST_DIR" "$BIN" "$DESKTOP_DIR" \
   "${ICON_DIR}/256x256/apps" "${HOME}/.local/share/pixmaps" \
   "${HOME}/.grokbot"
 
-# Replace a previous symlink instead of writing through it.
-rm -f "$DEST"
-cp -f "$APPIMAGE" "$DEST"
-chmod +x "$DEST"
 base="$(basename "$APPIMAGE")"
-if [[ $base != GrokBot-current.AppImage ]]; then
-  rm -f "${DEST_DIR}/${base}"
-  cp -f "$APPIMAGE" "${DEST_DIR}/${base}"
-  chmod +x "${DEST_DIR}/${base}"
+if [[ $base == GrokBot-current.AppImage ]]; then
+  echo "error: install the versioned AppImage (Grok_Bot_X.Y.Z_x86_64.AppImage), not GrokBot-current" >&2
+  exit 1
 fi
 
+# Versioned file + stable symlink. The wrapper retargets the symlink on update.
+rm -f "${DEST_DIR}/${base}"
+cp -f "$APPIMAGE" "${DEST_DIR}/${base}"
+chmod +x "${DEST_DIR}/${base}"
+rm -f "$DEST"
+ln -sfn "$base" "$DEST"
+
+sum="$(sha256sum "${DEST_DIR}/${base}" | awk '{print $1}')"
+ver="$base"
+if [[ $base =~ Grok_Bot_([0-9]+\.[0-9]+\.[0-9]+)_ ]]; then
+  ver="${BASH_REMATCH[1]}"
+fi
+cat >"${HOME}/.grokbot/installed" <<EOF
+tag=${ver}
+name=${base}
+sha256=${sum}
+path=${DEST}
+EOF
+
 install -m 0755 "${ROOT}/packaging/grok-bot.wrapper" "${BIN}/grok-bot"
-# Wrapper reads GROKBOT_APPIMAGE or ~/Applications/GrokBot-current.AppImage
+# Wrapper checks GitHub releases/latest and execs the symlink.
 
 install -m 0644 "${ROOT}/packaging/grok-bot.desktop" "${DESKTOP_DIR}/grok-bot.desktop"
 # Absolute Exec so the dock works even if ~/.local/bin is not in the desktop PATH.
@@ -75,8 +89,9 @@ if command -v kbuildsycoca6 >/dev/null 2>&1; then
 fi
 
 echo "Installed:"
-echo "  AppImage : $DEST"
+echo "  AppImage : $DEST -> ${base}"
 echo "  Command  : ${BIN}/grok-bot"
 echo "  Desktop  : ${DESKTOP_DIR}/grok-bot.desktop"
 echo
 echo "Click Grok Bot in the dock, or run: grok-bot"
+echo "Updates:    grok-bot --check   /   grok-bot --update-only"

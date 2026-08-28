@@ -1,12 +1,21 @@
 #!/bin/bash
 # Launcher for the unofficial Grok Bot Linux AppImage.
+# Checks GitHub releases/latest (not Cursor) and retargets the stable
+# GrokBot-current.AppImage symlink. Cursor's in-app updater cannot work here.
 set -u
 
-APPIMAGE="${GROKBOT_APPIMAGE:-$HOME/Applications/GrokBot-current.AppImage}"
+REPO="${GROKBOT_REPO:-glorics/grok-bot-linux}"
+APPS="${GROKBOT_APPS:-$HOME/Applications}"
+CURRENT="${GROKBOT_APPIMAGE:-$APPS/GrokBot-current.AppImage}"
 LOGDIR="${HOME}/.grokbot"
 LOG="${LOGDIR}/launch.log"
+STATE="${LOGDIR}/installed"
+CACHE="${LOGDIR}/latest-release.json"
+LOCK="${LOGDIR}/update.lock"
+API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+UA="grok-bot-linux-updater"
 
-mkdir -p "$LOGDIR"
+mkdir -p "$LOGDIR" "$APPS"
 
 if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
   export DISPLAY=:0
@@ -17,17 +26,219 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 unset GBM_BACKENDS_PATH LIBGL_DRIVERS_PATH __EGL_VENDOR_LIBRARY_DIRS \
       __EGL_VENDOR_LIBRARY_FILENAMES LIBVA_DRIVERS_PATH || true
 
-if [[ ! -x $APPIMAGE ]]; then
-  msg="Grok Bot AppImage missing or not executable: $APPIMAGE"
+log() { echo "$(date -Is) $*" >>"$LOG"; }
+
+MODE=launch
+PASS=()
+for arg in "$@"; do
+  case "$arg" in
+    --check) MODE=check ;;
+    --update-only) MODE=update-only ;;
+    --no-update) MODE=no-update ;;
+    *) PASS+=("$arg") ;;
+  esac
+done
+
+read_state() {
+  local key="$1"
+  [[ -f $STATE ]] || return 1
+  sed -n "s/^${key}=//p" "$STATE" | head -n 1
+}
+
+write_state() {
+  local tag="$1" name="$2" sha="$3"
+  cat >"$STATE" <<EOF
+tag=${tag}
+name=${name}
+sha256=${sha}
+path=${CURRENT}
+EOF
+}
+
+newest_local() {
+  ls -1t "$APPS"/Grok_Bot_*_x86_64.AppImage "$APPS"/Grok_Bot_*_x86_64.appimage 2>/dev/null | head -n 1 || true
+}
+
+ensure_current() {
+  local src base
+  if [[ -L $CURRENT && -e $CURRENT ]]; then
+    return 0
+  fi
+  src="$(newest_local)"
+  if [[ -z ${src} && -f $CURRENT && ! -L $CURRENT ]]; then
+    return 0
+  fi
+  if [[ -z ${src} ]]; then
+    return 1
+  fi
+  base="$(basename "$src")"
+  rm -f "$CURRENT"
+  ln -sfn "$base" "$CURRENT"
+  chmod +x "$src" 2>/dev/null || true
+}
+
+parse_latest() {
+  python3 - "$1" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as f:
+    data = json.load(f)
+tag = str(data.get("tag_name") or "").lstrip("v")
+for asset in data.get("assets") or []:
+    name = asset.get("name") or ""
+    lower = name.lower()
+    if not lower.endswith("_x86_64.appimage"):
+        continue
+    digest = asset.get("digest") or ""
+    if digest.startswith("sha256:"):
+        digest = digest[7:]
+    url = asset.get("browser_download_url") or ""
+    size = int(asset.get("size") or 0)
+    print(tag)
+    print(name)
+    print(size)
+    print(digest)
+    print(url)
+    break
+else:
+    sys.exit(1)
+PY
+}
+
+valid_url() {
+  local url="$1"
+  [[ $url == https://github.com/${REPO}/releases/download/* ]]
+}
+
+fetch_latest() {
+  local now age
+  now="$(date +%s)"
+  if [[ -f $CACHE ]]; then
+    age=$((now - $(stat -c %Y "$CACHE" 2>/dev/null || echo 0)))
+    if [[ $age -ge 0 && $age -lt 900 && -s $CACHE ]]; then
+      return 0
+    fi
+  fi
+  curl -fsSL -A "$UA" --max-time 12 "$API_URL" -o "${CACHE}.partial" || return 1
+  mv -f "${CACHE}.partial" "$CACHE"
+}
+
+is_elf() {
+  local magic
+  magic="$(od -An -t x1 -N 4 "$1" 2>/dev/null | tr -d ' \n')"
+  [[ $magic == 7f454c46 ]]
+}
+
+do_update() {
+  local tag name size sha url dest partial got line
+  fetch_latest || { log "update: github latest fetch failed"; return 1; }
+  mapfile -t line < <(parse_latest "$CACHE") || { log "update: cannot parse github json"; return 1; }
+  tag="${line[0]:-}"
+  name="${line[1]:-}"
+  size="${line[2]:-0}"
+  sha="${line[3]:-}"
+  url="${line[4]:-}"
+  if [[ -z $tag || -z $name || -z $sha || -z $url ]]; then
+    log "update: incomplete github asset"
+    return 1
+  fi
+  valid_url "$url" || { log "update: refused url $url"; return 1; }
+
+  got="$(read_state sha256 || true)"
+  if [[ $got == "$sha" && -e $CURRENT ]]; then
+    log "update: already $tag ($sha)"
+    echo "installed $tag (latest)"
+    return 0
+  fi
+
+  echo "updating to $tag ..."
+  dest="${APPS}/${name}"
+  partial="${dest}.partial"
+  rm -f "$partial"
+  curl -fL -A "$UA" --retry 2 --max-time 300 "$url" -o "$partial" || {
+    log "update: download failed"
+    rm -f "$partial"
+    return 1
+  }
+  if [[ ! -s $partial ]]; then
+    log "update: empty download"
+    rm -f "$partial"
+    return 1
+  fi
+  if [[ $size != 0 ]]; then
+    got="$(stat -c %s "$partial")"
+    if [[ $got != "$size" ]]; then
+      log "update: size $got != $size"
+      rm -f "$partial"
+      return 1
+    fi
+  fi
+  got="$(sha256sum "$partial" | awk '{print $1}')"
+  if [[ $got != "$sha" ]]; then
+    log "update: sha256 mismatch"
+    rm -f "$partial"
+    return 1
+  fi
+  if ! is_elf "$partial"; then
+    log "update: not ELF"
+    rm -f "$partial"
+    return 1
+  fi
+  chmod +x "$partial"
+  mv -f "$partial" "$dest"
+  (
+    cd "$APPS" || exit 1
+    rm -f "$CURRENT"
+    ln -sfn "$name" "$CURRENT"
+  )
+  write_state "$tag" "$name" "$sha"
+  log "update: installed $tag $name"
+  echo "installed $tag"
+  return 0
+}
+
+{
+  echo "===== $(date -Is) pid=$$ ====="
+  echo "display=${DISPLAY:-} wayland=${WAYLAND_DISPLAY:-} mode=$MODE args=${PASS[*]:-}"
+} >>"$LOG"
+
+ensure_current || true
+
+if [[ $MODE != no-update ]]; then
+  exec 9>"$LOCK"
+  if flock -n 9; then
+    if [[ $MODE == check ]]; then
+      if fetch_latest && mapfile -t line < <(parse_latest "$CACHE"); then
+        echo "installed: $(read_state tag 2>/dev/null || echo unknown)"
+        echo "github:    ${line[0]}  ${line[1]}"
+        echo "sha256:    ${line[3]}"
+      else
+        echo "could not query GitHub" >&2
+        exit 1
+      fi
+      exit 0
+    fi
+    do_update || log "update: skipped, launching current"
+  else
+    log "update: lock busy"
+  fi
+  exec 9>&-
+fi
+
+if [[ $MODE == update-only || $MODE == check ]]; then
+  exit 0
+fi
+
+app="$CURRENT"
+if [[ -L $CURRENT ]]; then
+  app="$(readlink -f "$CURRENT" || true)"
+fi
+if [[ -z ${app} || ! -x $app ]]; then
+  msg="Grok Bot AppImage missing or not executable: $CURRENT"
   echo "$msg" >&2
-  echo "$(date -Is) $msg" >>"$LOG"
+  log "$msg"
   command -v notify-send >/dev/null && notify-send "Grok Bot" "$msg" || true
   exit 1
 fi
 
-{
-  echo "===== $(date -Is) pid=$$ ====="
-  echo "display=${DISPLAY:-} wayland=${WAYLAND_DISPLAY:-} args=$*"
-} >>"$LOG"
-
-exec "$APPIMAGE" --no-sandbox --class=grok-bot --ozone-platform-hint=auto "$@" >>"$LOG" 2>&1
+exec "$app" --no-sandbox --class=grok-bot --ozone-platform-hint=auto "${PASS[@]}" >>"$LOG" 2>&1

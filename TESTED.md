@@ -22,6 +22,7 @@ Checks on that host:
 - GPU process and renderer stay up on Wayland
 - Isolated-profile smoke test
 - AppRun left existing dock `Exec` unchanged on GNOME
+- `grok-bot --check` matches GitHub latest; `--update-only` fetched 0.29.0 from a fake 0.28.1 install (SHA-256 verified)
 
 Previous first-party builds (still published):
 

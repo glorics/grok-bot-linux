@@ -34,6 +34,18 @@ To register a dock / menu launcher (XDG, any distro):
 ./scripts/install-linux.sh Grok_Bot_0.29.0_x86_64.AppImage
 ```
 
+That installs `~/.local/bin/grok-bot`, which checks this GitHub repo's latest
+release on launch (not Cursor: Settings → Check for Updates cannot work on
+Linux). `~/Applications/GrokBot-current.AppImage` is a symlink. If GitHub is
+newer, it downloads the AppImage, verifies SHA-256 and ELF, then retargets
+the link. A failed check still launches whatever is already installed.
+
+```bash
+grok-bot --check
+grok-bot --update-only
+grok-bot --no-update
+```
+
 Sign in with the same Cursor / SuperGrok Plus account. Bots live on the cloud
 computer; this app is only the remote control.
 
