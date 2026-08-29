@@ -85,6 +85,14 @@ in-app updater cannot work on Linux).
 omarchy plugin add https://github.com/glorics/omarchy-grok-bot.git --enable
 ```
 
+A second face, a jar of sand instead of the orb:
+
+```bash
+omarchy plugin add https://github.com/glorics/omarchy-grok-sand.git --enable
+```
+
+Enable one. Both at once is two bar icons.
+
 This is not an official Omarchy or xAI plugin. Omarchy's own `grok-bot`
 package is 0.24.0; this widget prefers the unofficial AppImage when both
 are present.
