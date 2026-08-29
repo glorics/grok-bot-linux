@@ -74,6 +74,21 @@ tarball. Menu entry:
 ./scripts/install-linux.sh Grok_Bot_0.30.0_x86_64.AppImage
 ```
 
+### Omarchy bar plugin
+
+The AppImage is the app. [glorics/omarchy-grok-bot](https://github.com/glorics/omarchy-grok-bot)
+is optional desktop chrome: a bar icon that launch-or-focuses the window,
+shows running/crashed, and checks GitHub for a newer AppImage (Cursor's
+in-app updater cannot work on Linux).
+
+```bash
+omarchy plugin add https://github.com/glorics/omarchy-grok-bot.git --enable
+```
+
+This is not an official Omarchy or xAI plugin. Omarchy's own `grok-bot`
+package is 0.24.0; this widget prefers the unofficial AppImage when both
+are present.
+
 ## Arch Linux
 
 **Community-confirmed.** [@RawXennial](https://x.com/RawXennial/status/2092756795840204804)
