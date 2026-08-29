@@ -85,7 +85,7 @@ in-app updater cannot work on Linux).
 omarchy plugin add https://github.com/glorics/omarchy-grok-bot.git --enable
 ```
 
-A second face, a jar of sand instead of the orb:
+A second face, the same orb in a sunset flavor (magenta, gold, powerline chips):
 
 ```bash
 omarchy plugin add https://github.com/glorics/omarchy-grok-sand.git --enable
